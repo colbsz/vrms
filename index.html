@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>VRMS Chat Website</title>
+  </head>
+  <body>
+    <h1>VRMS Chat Website</h1>
+    <input type="text" id="nickname-input" placeholder="Enter your nickname">
+    <div id="chat-window"></div>
+    <form id="message-form">
+      <input type="text" id="message-input" placeholder="Type your message">
+      <button type="submit">Send</button>
+    </form>
+
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js"></script>
+    <script>
+      // Initialize Firebase
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      // Prompt user for nickname
+      const nickname = prompt("Enter your nickname");
+
+      // Listen for new messages
+      db.collection("messages").orderBy("timestamp").onSnapshot((querySnapshot) => {
+        const messages = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        const chatWindow = document.querySelector("#chat-window");
+        chatWindow.innerHTML = "";
+        messages.forEach((message) => {
+          const messageElement = document.createElement("div");
+          messageElement.textContent = `${message.nickname}: ${message.text}`;
+          chatWindow.appendChild(messageElement);
+        });
+      });
+
+      // Send messages
+      const messageForm = document.querySelector("#message-form");
+      const messageInput = document.querySelector("#message-input");
+      messageForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const text = messageInput.value.trim();
+        if (text) {
+          db.collection("messages").add({
+            text,
+            nickname,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+          messageInput.value = "";
+        }
+      });
+    </script>
+  </body>
+</html>
